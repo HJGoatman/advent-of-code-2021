@@ -7,6 +7,7 @@ course = [(x.split(' ')[0], x.split(' ')[1]) for x in course if x != '']
 
 horizontal_position = 0
 depth = 0
+aim = 0
 
 for direction, distance in course:
 
@@ -14,9 +15,10 @@ for direction, distance in course:
 
     if direction == 'forward':
         horizontal_position = horizontal_position + distance
+        depth = depth + aim * distance
     elif direction == 'down':
-        depth = depth + distance
+        aim = aim + distance
     elif direction == "up":
-        depth = depth - distance
+        aim = aim - distance
 
 print(horizontal_position, depth, horizontal_position * depth)
