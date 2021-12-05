@@ -25,9 +25,20 @@ class Line:
 
 
 def is_point_on_line(iy, ix, line):
-    return (
-        (ix >= line.x1 and ix <= line.x2) and (iy >= line.y1 and iy <= line.y2)
-    ) or ((ix <= line.x1 and ix >= line.x2) and (iy <= line.y1 and iy >= line.y2))
+    dy = line.y2 - line.y1
+    dx = line.x2 - line.x1
+
+    within_bounds = (min(line.x1, line.x2) <= ix <= max(line.x1, line.x2)) and (
+        min(line.y1, line.y2) <= iy <= max(line.y1, line.y2)
+    )
+
+    if dy == 0 or dx == 0:
+        return within_bounds
+
+    gradient = dy / dx
+    intercept1 = line.y1 - gradient * line.x1
+
+    return within_bounds and iy == (gradient * ix + intercept1)
 
 
 with open(sys.argv[1], "r") as input_file:
@@ -38,8 +49,7 @@ lines = [Line.from_str(line) for line in input.split("\n") if line != ""]
 max_x = max([max(line.x1, line.x2) for line in lines])
 max_y = max([max(line.y1, line.y2) for line in lines])
 
-lines = list(filter(lambda line: line.x1 == line.x2 or line.y1 == line.y2, lines))
-
+# This is a very slow way of doing this.
 diagram = np.zeros((max_x + 1, max_y + 1))
 for iy, ix in np.ndindex(diagram.shape):
     for line in lines:
