@@ -10,17 +10,12 @@ with open(sys.argv[1], "r") as input_file:
     input = input_file.read()
 
 initial_state = [int(val) for val in input.split(',')]
-# print(f'Initial state: {state_to_string(initial_state)}')
 
-state = initial_state.copy()
+state = [len(list(filter(lambda x: x == i, initial_state))) for i in range(0,9)]
+
 for day in range(1, int(sys.argv[2]) + 1):
-    ready_to_born_idx = [i for i, x in enumerate(state) if x == 0]
-    for i in ready_to_born_idx:
-        state.append(9)
-        state[i] = 7
+    number_of_births = state.pop(0)
+    state[6] = state[6] + number_of_births
+    state.append(number_of_births)
 
-    state = list(map(lambda laternfish: laternfish - 1, state))
-    # print(f"After {day} day: {state_to_string(state)}")
-    
-    
-print(f"Total Fish after day {day}: {len(state)}")
+print(sum(state))
