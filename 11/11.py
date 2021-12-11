@@ -22,7 +22,7 @@ octopuses = np.asarray(
 
 print(octopuses)
 number_of_flashes = 0
-for step in range(100):
+for step in range(1000000000):
     # Increment octopuses by 1
     octopuses = octopuses + 1
 
@@ -53,5 +53,9 @@ for step in range(100):
     delete_multiple_lines(10)
     print(octopuses, flush=True)
     time.sleep(0.1)
+
+    if (octopuses == 0).all():
+        print(f"All Octopuses Synchronised at Step {step + 1}")
+        break
 
 print(number_of_flashes)
