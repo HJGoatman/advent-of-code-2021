@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from functools import reduce
-from itertools import product
+from itertools import product, groupby
 
 
 def remove_vertex(target_node, edge):
@@ -33,12 +33,12 @@ def expand_path(compressed):
     return list(map(lambda x: compressed[0] + x, compressed[1:]))
 
 
-def find_paths(adjacency_list, start, end, visited):
+def _find_paths(adjacency_list, start, end, visited):
     if start == end:
         return visited + [end]
 
     paths = [
-        find_paths(adjacency_list, connected, end, visited + [start])
+        _find_paths(adjacency_list, connected, end, visited + [start])
         for connected in adjacency_list[start]
         if (connected not in visited) or connected[0].isupper()
     ]
@@ -46,42 +46,47 @@ def find_paths(adjacency_list, start, end, visited):
     return reduce(list.__add__, paths, [])
 
 
-paths = find_paths(adjacency_list, "start", "end", [])
-ends = [i for i in range(len(paths)) if paths[i] == "end"]
-starts = [i for i in range(len(paths)) if paths[i] == "start"]
+def find_paths(adjacency_list, start, end, visited):
+    paths = _find_paths(adjacency_list, start, end, visited)
+    ends = [i for i in range(len(paths)) if paths[i] == "end"]
+    starts = [i for i in range(len(paths)) if paths[i] == "start"]
 
-print(len([paths[starts[i] : ends[i]] for i in range(len(starts))]))
-
-# def flatten(list_of_lists):
-#     if len(list_of_lists) == 0:
-#         return list_of_lists
-#     if isinstance(list_of_lists[0], list):
-#         return flatten(list_of_lists[0]) + flatten(list_of_lists[1:])
-#     return list_of_lists[:1] + flatten(list_of_lists[1:])
+    return [paths[starts[i] : ends[i]] + ["end"] for i in range(len(starts))]
 
 
-# print(flatten(paths))
-# print()
-# data = ["b", ["A", ["end"]], ["d"], ["end"]]
+# print(len(find_paths(adjacency_list, "start", "end", [])))
+
+# Idea: Add a second vertex to 1 small cave, run get paths, rename the vertex back. Convert to Set.
+# print(adjacency_list)
+caves = adjacency_list.keys()
+small_caves = [
+    cave for cave in caves if (cave not in ["start", "end"]) and cave[0].islower()
+]
+
+paths = []
+
+for small_cave in small_caves:
+    new_adjacency_list = adjacency_list.copy()
+
+    fake_cave = small_cave + "2"
+
+    new_adjacency_list[fake_cave] = adjacency_list[small_cave]
+    for key, values in new_adjacency_list.items():
+        if small_cave in values:
+            new_adjacency_list[key] = values + [fake_cave]
+
+    cave_paths = find_paths(new_adjacency_list, "start", "end", [])
+
+    # Rename fake cave backs
+    cave_paths = [
+        [small_cave if vertex == fake_cave else vertex for vertex in path]
+        for path in cave_paths
+    ]
+
+    paths = paths + cave_paths
 
 
-# def expand(paths):
-#     print(paths)
-#     if len(paths) == 1:
-#         if isinstance(paths[0], str):
-#             print(1)
-#             expanded = [paths[0]]
-#         else:
-#             print(2)
-#             expanded = paths[0]
+paths.sort()
+paths = list(paths for paths, _ in groupby(paths))
 
-#     else:
-#         print(3)
-#         expanded = [[paths[0]] + expand(path) for path in paths[1:]]
-
-#     print(expanded)
-#     print()
-#     return expanded
-
-
-# print(expand(data))
+print(len(paths))
