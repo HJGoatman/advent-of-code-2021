@@ -89,7 +89,22 @@ risk_map = np.asarray(
     [list(map(int, list(line))) for line in input.split("\n") if line != ""]
 )
 
+size_x = risk_map.shape[0]
+size_y = risk_map.shape[1]
+
+large_map = np.zeros(np.asarray(risk_map.shape) * 5)
+
+for i in range(5):
+    for j in range(5):
+        large_map[
+            i * size_x : i * size_x + size_x, j * size_y : j * size_y + size_y
+        ] = (((risk_map + i + j) - 1) % 9) + 1
+
+
+risk_map = large_map.astype(int)
+
 print(risk_map)
+
 
 TARGET_X = risk_map.shape[0] - 1
 TARGET_Y = risk_map.shape[1] - 1
@@ -99,5 +114,7 @@ path = a_star(
     (TARGET_X, TARGET_Y),
     lambda node: abs(node[0] - TARGET_X) + abs(node[1] - TARGET_Y),
 )
+
+# print(path)
 
 print(sum(risk_map[[x for x, _ in path[1:]], [y for _, y in path[1:]]]))
