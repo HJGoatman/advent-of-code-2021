@@ -1,4 +1,10 @@
-from main import parse_packet, sum_versions, convert_hex, OperatorPacket
+from main import (
+    parse_packet,
+    sum_versions,
+    convert_hex,
+    OperatorPacket,
+    evaluate_packet,
+)
 
 
 def test_1():
@@ -45,3 +51,40 @@ def test_6():
 def test_7():
     packet, _ = parse_packet(convert_hex("A0016C880162017C3686B18A3D4780"))
     assert sum_versions(packet) == 31
+
+
+def eval_hex(hex):
+    packet, _ = parse_packet(convert_hex(hex))
+    return evaluate_packet(packet)
+
+
+def test_sum_eval():
+    assert eval_hex("C200B40A82") == 3
+
+
+def test_product_eval():
+    assert eval_hex("04005AC33890") == 54
+
+
+def test_minimum_eval():
+    assert eval_hex("880086C3E88112") == 7
+
+
+def test_maximum_eval():
+    assert eval_hex("CE00C43D881120") == 9
+
+
+def test_less_than_eval():
+    assert eval_hex("D8005AC2A8F0") == 1
+
+
+def test_greater_than_eval():
+    assert eval_hex("F600BC2D8F") == 0
+
+
+def test_not_equal_eval():
+    assert eval_hex("9C005AC2F8F0") == 0
+
+
+def test_multi_eval():
+    assert eval_hex("9C0141080250320F1802104A08") == 1

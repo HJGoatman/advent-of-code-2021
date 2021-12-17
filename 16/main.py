@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import reduce
 import sys
 
 HEX_MAP = {
@@ -19,12 +20,6 @@ HEX_MAP = {
     "E": "1110",
     "F": "1111",
 }
-
-MINIMUM_PACKET_SIZE = 6
-
-MINIMUM_LITERAL_VALUE_PACKET_SIZE = 11
-
-MINIMUL_OPERATOR_PACKET_SIZE = 17 + MINIMUM_LITERAL_VALUE_PACKET_SIZE
 
 
 @dataclass
@@ -102,6 +97,30 @@ def parse_packet(binary_packet):
         )
 
 
+def evaluate_packet(packet):
+    type_id = packet.type_id
+
+    if type_id == 4:
+        return packet.value
+
+    subpacket_values = list(map(evaluate_packet, packet.subpackets))
+
+    if type_id == 0:
+        return sum(subpacket_values)
+    elif packet.type_id == 1:
+        return reduce(int.__mul__, subpacket_values)
+    elif type_id == 2:
+        return min(subpacket_values)
+    elif type_id == 3:
+        return max(subpacket_values)
+    elif type_id == 5:
+        return int(subpacket_values[0] > subpacket_values[1])
+    elif type_id == 6:
+        return int(subpacket_values[0] < subpacket_values[1])
+    else:
+        return int(subpacket_values[0] == subpacket_values[1])
+
+
 def convert_hex(hex):
     return list("".join(map(lambda c: HEX_MAP[c], hex)))
 
@@ -114,3 +133,5 @@ if __name__ == "__main__":
     packet, binary_string = parse_packet(binary_packet)
 
     print(sum_versions(packet))
+
+    print(evaluate_packet(packet))
