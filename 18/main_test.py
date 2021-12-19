@@ -9,6 +9,8 @@ from main import (
     get_magnitude,
     Pair,
     leaves_to_tree,
+    load_leaves,
+    get_largest_magnitude_pair,
 )
 
 numbers_1 = load_snailfish_numbers([[[[[9, 8], 1], 2], 3], 4])
@@ -215,3 +217,12 @@ def test_integration():
     )
 
     assert get_magnitude(leaves_to_tree(file_add_out)) == 4140
+
+
+def test_get_largest_magnitude_pair():
+    with open("test2.txt") as input_file:
+        input = input_file.read()
+
+    leaves = load_leaves(input)
+
+    assert get_largest_magnitude_pair(leaves) == 3993

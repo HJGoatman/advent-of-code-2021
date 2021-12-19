@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from math import ceil, floor
 
 from functools import reduce
+from itertools import permutations
 
 import sys
 
@@ -86,7 +87,7 @@ def add(leaves1, leaves2):
     return leaves
 
 
-def add_file(input_str):
+def load_leaves(input_str):
     snailfish_numbers_list = [
         load_snailfish_numbers(eval(line))
         for line in input_str.split("\n")
@@ -96,6 +97,12 @@ def add_file(input_str):
     leaves_list = [
         get_leaves(snailfish_numbers) for snailfish_numbers in snailfish_numbers_list
     ]
+
+    return leaves_list
+
+
+def add_file(input_str):
+    leaves_list = load_leaves(input_str)
 
     return reduce(add, leaves_list)
 
@@ -128,8 +135,21 @@ def leaves_to_tree(leaves: list[RegularNumber]) -> SnailFishNumbers:
     return stack[0]
 
 
+def get_largest_magnitude_pair(leaves: list[RegularNumber]) -> int:
+    return max(
+        [
+            get_magnitude(leaves_to_tree(add(leaves_a, leaves_b)))
+            for leaves_a, leaves_b in permutations(leaves, 2)
+        ]
+    )
+
+
 if __name__ == "__main__":
     with open(sys.argv[1], "r") as input_file:
         input = input_file.read()
 
     print(get_magnitude(leaves_to_tree(add_file(input))))
+
+    # Part 2
+    leaves = load_leaves(input)
+    print(get_largest_magnitude_pair(leaves))
