@@ -3,17 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import ceil, floor
 
+from functools import reduce
+
+import sys
+
 
 @dataclass
 class SnailFishNumbers:
-    pass
+    depth: int
 
 
 @dataclass
 class Pair(SnailFishNumbers):
     left: SnailFishNumbers
     right: SnailFishNumbers
-    depth: int
 
 
 @dataclass
@@ -23,7 +26,7 @@ class RegularNumber(SnailFishNumbers):
 
 def load_snailfish_numbers(snailfish_numbers_list, depth=0) -> SnailFishNumbers:
     if isinstance(snailfish_numbers_list, int):
-        return RegularNumber(value=snailfish_numbers_list)
+        return RegularNumber(depth=depth, value=snailfish_numbers_list)
     else:
         return Pair(
             left=load_snailfish_numbers(snailfish_numbers_list[0], depth=depth + 1),
@@ -32,109 +35,101 @@ def load_snailfish_numbers(snailfish_numbers_list, depth=0) -> SnailFishNumbers:
         )
 
 
-def get_exploded_value(numbers: SnailFishNumbers, is_right: bool) -> RegularNumber:
-    if isinstance(numbers, Pair) and numbers.depth == 4:
-        if is_right:
-            return numbers.right
+def get_leaves(snailfish: SnailFishNumbers) -> list[RegularNumber]:
+    if isinstance(snailfish, RegularNumber):
+        return [snailfish]
+
+    return get_leaves(snailfish.left) + get_leaves(snailfish.right)
+
+
+def explode(leaves: list[RegularNumber]) -> list[RegularNumber]:
+    i = next(i for i, x in enumerate(leaves) if x.depth > 4)
+    j = i + 1
+
+    if i - 1 >= 0:
+        leaves[i - 1].value = leaves[i - 1].value + leaves[i].value
+
+    if j + 1 < len(leaves):
+        leaves[j + 1].value = leaves[j + 1].value + leaves[j].value
+
+    return leaves[:i] + [RegularNumber(leaves[i].depth - 1, 0)] + leaves[j + 1 :]
+
+
+def split(leaves: list[RegularNumber]) -> list[RegularNumber]:
+    i, x = next((i, x) for i, x in enumerate(leaves) if x.value >= 10)
+
+    return (
+        leaves[:i]
+        + [
+            RegularNumber(x.depth + 1, floor(x.value / 2)),
+            RegularNumber(x.depth + 1, ceil(x.value / 2)),
+        ]
+        + leaves[i + 1 :]
+    )
+
+
+def add(leaves1, leaves2):
+    leaves = [RegularNumber(leaf.depth + 1, leaf.value) for leaf in leaves1] + [
+        RegularNumber(leaf.depth + 1, leaf.value) for leaf in leaves2
+    ]
+
+    while any([leaf.depth > 4 for leaf in leaves]) or any(
+        [leaf.value >= 10 for leaf in leaves]
+    ):
+        if any([leaf.depth > 4 for leaf in leaves]):
+            leaves = explode(leaves)
+            continue
+        if any([leaf.value >= 10 for leaf in leaves]):
+            leaves = split(leaves)
+            continue
+
+    return leaves
+
+
+def add_file(input_str):
+    snailfish_numbers_list = [
+        load_snailfish_numbers(eval(line))
+        for line in input_str.split("\n")
+        if line != ""
+    ]
+
+    leaves_list = [
+        get_leaves(snailfish_numbers) for snailfish_numbers in snailfish_numbers_list
+    ]
+
+    return reduce(add, leaves_list)
+
+
+def get_magnitude(pair):
+    if isinstance(pair, RegularNumber):
+        return pair.value
+
+    return 3 * get_magnitude(pair.left) + 2 * get_magnitude(pair.right)
+
+
+def leaves_to_tree(leaves: list[RegularNumber]) -> SnailFishNumbers:
+    stack = []
+
+    while len(stack) != 1 or len(leaves) != 0:
+        if len(stack) < 2:
+            stack.append(leaves.pop(0))
+            continue
+
+        right = stack.pop()
+        left = stack.pop()
+
+        if left.depth == right.depth:
+            stack.append(Pair(right.depth - 1, left, right))
         else:
-            return numbers.left
+            stack.append(left)
+            stack.append(right)
+            stack.append(leaves.pop(0))
 
-    if isinstance(numbers, RegularNumber):
-        return None
-
-    for pair in [numbers.left, numbers.right]:
-        value = get_exploded_value(pair, is_right=is_right)
-        if value is not None:
-            return value
-
-    return None
+    return stack[0]
 
 
-def has_regular_number(
-    numbers: SnailFishNumbers, max_depth: int, is_right: bool
-) -> bool:
-    if isinstance(numbers, RegularNumber):
-        return False
+if __name__ == "__main__":
+    with open(sys.argv[1], "r") as input_file:
+        input = input_file.read()
 
-    if is_right:
-        search_side = numbers.right
-        other_side = numbers.left
-    else:
-        search_side = numbers.left
-        other_side = numbers.right
-
-    if isinstance(search_side, RegularNumber) and numbers.depth < max_depth:
-        return True
-    else:
-        return has_regular_number(
-            other_side, max_depth - 1, is_right
-        ) or has_regular_number(other_side, max_depth - 1, is_right)
-
-
-def explode(numbers: SnailFishNumbers) -> SnailFishNumbers:
-    if isinstance(numbers, RegularNumber):
-        return numbers
-
-    if numbers.depth == 4:
-        return RegularNumber(0)
-
-    exploded_right_value = get_exploded_value(numbers, is_right=True)
-    exploded_left_value = get_exploded_value(numbers, is_right=False)
-
-    if exploded_right_value is None or exploded_left_value is None:
-        return numbers
-
-    if isinstance(numbers.right, RegularNumber) and not has_regular_number(
-        numbers.left, 4, is_right=True
-    ):
-        return Pair(
-            left=explode(numbers.left),
-            right=RegularNumber(
-                numbers.right.value + exploded_right_value.value,
-            ),
-            depth=numbers.depth,
-        )
-
-    if isinstance(numbers.left, RegularNumber) and not has_regular_number(
-        numbers.right, 4, is_right=False
-    ):
-        return Pair(
-            left=RegularNumber(
-                numbers.left.value + exploded_left_value.value,
-            ),
-            right=explode(numbers.right),
-            depth=numbers.depth,
-        )
-
-    return Pair(
-        left=explode(numbers.left),
-        right=explode(numbers.right),
-        depth=numbers.depth,
-    )
-
-
-def split(numbers: SnailFishNumbers, depth: int) -> SnailFishNumbers:
-    if isinstance(numbers, RegularNumber):
-        if numbers.value > 10:
-            split_value = numbers.value / 2
-            return Pair(
-                left=RegularNumber(floor(split_value)),
-                right=RegularNumber(ceil(split_value)),
-                depth=depth,
-            )
-
-        return numbers
-
-    return Pair(
-        left=explode_split(numbers.left, numbers.depth + 1),
-        right=explode_split(numbers.right, numbers.depth + 1),
-        depth=numbers.depth,
-    )
-
-
-def explode_split(numbers: SnailFishNumbers, depth) -> SnailFishNumbers:
-    return split(explode(numbers), depth)
-
-
-def add(list1, list2):
-    return explode_split(load_snailfish_numbers(list1 + list2), 0)
+    print(get_magnitude(leaves_to_tree(add_file(input))))
