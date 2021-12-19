@@ -1,5 +1,12 @@
 from os import read
-from main import read_scanner_reports, Beacon, ScannerReport, find_overlapping_beacons
+from main import (
+    read_scanner_reports,
+    Beacon,
+    ScannerReport,
+    find_overlapping_beacons,
+    Scanner,
+    create_map,
+)
 
 with open("tests/test1.txt") as input_file:
     test_1_str = input_file.read()
@@ -12,8 +19,11 @@ def test_read_scanner_reports():
     ]
 
 
+scanner_reports = read_scanner_reports(test_1_str)
+
+
 def test_find_overlapping_beacons():
-    scanner_reports = read_scanner_reports(test_1_str)
+
     assert (
         find_overlapping_beacons(
             scanner_report_1=scanner_reports[0],
@@ -22,3 +32,13 @@ def test_find_overlapping_beacons():
         )
         == {2: 2, 0: 1, 1: 0}
     )
+
+
+def test_create_map():
+    assert create_map(scanner_reports, 3) == {
+        Beacon(0, 2, 0),
+        Beacon(4, 1, 0),
+        Beacon(3, 3, 0),
+        Scanner(0, 0, 0),
+        Scanner(5, 2, 0),
+    }
