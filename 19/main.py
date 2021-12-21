@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from functools import reduce
+from itertools import permutations
 
 
 @dataclass(frozen=True, eq=True)
@@ -20,6 +21,9 @@ class Scanner:
 class ScannerReport:
     id: int
     beacons: list[Beacon]
+
+    def __eq__(self, __o: object) -> bool:
+        return (self.id == __o.id) and (set(self.beacons) == set(__o.beacons))
 
 
 def read_beacon(beacon: str) -> Beacon:
@@ -158,5 +162,66 @@ def create_map(scanner_reports: list[ScannerReport], min_overlapping_beacons):
 
     return the_map
 
-def get_rotations():
-    
+
+def _get_rotation(
+    scanner_report: ScannerReport, x_mul: int, y_mul: int, z_mul: int
+) -> ScannerReport:
+
+    beacons = [
+        Beacon(beacon.x * x_mul, beacon.y * y_mul, beacon.z * z_mul)
+        for beacon in scanner_report.beacons
+    ]
+
+    return ScannerReport(scanner_report.id, beacons)
+
+
+def _swap_columns(scanner_report: ScannerReport) -> list[ScannerReport]:
+    accessors = [
+        ("X", lambda beacon: beacon.x),
+        ("Y", lambda beacon: beacon.y),
+        ("Z", lambda beacon: beacon.z),
+    ]
+
+    reports = []
+
+    for accessor in permutations(accessors, 3):
+        print([access[0] for access in accessor])
+        reports.append(
+            ScannerReport(
+                scanner_report.id,
+                [
+                    Beacon(
+                        *map(lambda ac: ac(beacon), [access[1] for access in accessor])
+                    )
+                    for beacon in scanner_report.beacons
+                ],
+            )
+        )
+
+    return reports
+
+
+def get_rotations(scanner_report: ScannerReport) -> list[ScannerReport]:
+    potential_reports = _swap_columns(scanner_report)
+
+    rotations = [
+        (
+            [report for i, report in enumerate(potential_reports) if i in [0, 3, 4]],
+            [(1, 1, 1), (-1, -1, 1), (-1, 1, -1), (1, -1, -1)],
+        ),
+        (
+            [report for i, report in enumerate(potential_reports) if i in [1, 2, 5]],
+            [(1, 1, -1), (1, -1, 1), (-1, 1, 1), (-1, -1, -1)],
+        ),
+    ]
+
+    reports = [
+        [
+            _get_rotation(report, x_mul, y_mul, z_mul)
+            for x_mul, y_mul, z_mul in rotation_set
+            for report in report_subset
+        ]
+        for report_subset, rotation_set in rotations
+    ]
+
+    return reports[0] + reports[1]

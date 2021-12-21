@@ -6,6 +6,7 @@ from main import (
     find_overlapping_beacons,
     Scanner,
     create_map,
+    get_rotations,
 )
 
 with open("tests/test1.txt") as input_file:
@@ -42,3 +43,16 @@ def test_create_map():
         Scanner(0, 0, 0),
         Scanner(5, 2, 0),
     }
+
+
+def test_get_rotations():
+    with open("tests/test2.txt") as input_file:
+        input = input_file.read()
+
+    scanner_reports = read_scanner_reports(input)
+
+    rotations = get_rotations(scanner_reports[0])
+
+    assert all([report in rotations for report in scanner_reports[1:]])
+
+
