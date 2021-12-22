@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import reduce
-from itertools import permutations
+from itertools import permutations, combinations, product
 
 
 @dataclass(frozen=True, eq=True)
@@ -24,6 +24,13 @@ class ScannerReport:
 
     def __eq__(self, __o: object) -> bool:
         return (self.id == __o.id) and (set(self.beacons) == set(__o.beacons))
+
+
+@dataclass(frozen=True, eq=True)
+class Edge:
+    id: int
+    start: Beacon
+    end: Beacon
 
 
 def read_beacon(beacon: str) -> Beacon:
@@ -62,71 +69,67 @@ def combine_dicts(dict1, dict2):
     }
 
 
+def have_same_distances(pair):
+    a, b = pair
+
+    return (
+        (abs(a.start.x - a.end.x) == abs(b.start.x - b.end.x))
+        and (abs(a.start.y - a.end.y) == abs(b.start.y - b.end.y))
+        and (abs(a.start.z - a.end.z) == abs(b.start.z - b.end.z))
+    )
+
+
 def find_overlapping_beacons(
     scanner_report_1: ScannerReport,
     scanner_report_2: ScannerReport,
-    min_overlapping_beacons,
+    min_overlapping_beacons: int,
 ) -> list[Beacon]:
-
-    matches = []
-
-    for accessor in [
-        lambda beacon: beacon.x,
-        lambda beacon: beacon.y,
-        lambda beacon: beacon.z,
-    ]:
-
-        displacements_1, displacements_2 = (
-            get_beacon_displacements(scanner_report.beacons, accessor)
-            for scanner_report in [scanner_report_1, scanner_report_2]
-        )
-
-        common_distances = set(displacements_1).intersection(set(displacements_2))
-
-        common_displacements_1, common_displacements_2 = (
+    edge_pairs = product(
+        *[
             [
-                (i, dist)
-                for i, dist in enumerate(displacements)
-                if dist in common_distances
+                Edge(id=i, start=start, end=end)
+                for i, (start, end) in enumerate(combinations(report.beacons, 2))
             ]
-            for displacements in [displacements_1, displacements_2]
-        )
-
-        matches.append(
-            {
-                i: [j for j, v2 in common_displacements_2 if v1 == v2]
-                for i, v1 in common_displacements_1
-            }
-        )
-
-    edge_match = {
-        i: reduce(
-            lambda list1, list2: set(list1).intersection(list2),
-            [match[i] for match in matches],
-        )
-        for i in matches[0]
-    }
-    if all([len(s) == 1 for _, s in edge_match.items()]):
-        edge_map = {k: next(iter(v)) for k, v in edge_match.items()}
-        edges_1 = [
-            (i, j)
-            for j in range(len(edge_match))
-            for i in range(len(edge_match))
-            if i != j and i < j
+            for report in [scanner_report_1, scanner_report_2]
         ]
-        edges_2 = [edges_1[edge_map[i]] for i, _ in enumerate(edges_1)]
+    )
 
-        node_matches = reduce(
-            combine_dicts,
-            [{i: {k, l}, j: {k, l}} for (i, j), (k, l) in zip(edges_1, edges_2)],
+    matching_edges = list(
+        filter(
+            have_same_distances,
+            edge_pairs,
         )
+    )
 
-        if all([len(s) == 1 for _, s in node_matches.items()]):
-            node_map = {k: next(iter(v)) for k, v in node_matches.items()}
-            if len(node_map) >= min_overlapping_beacons:
-                return node_map
-            else:
-                return {}
+    beacon_mapping = {}
+    for edge1, edge2 in matching_edges:
+        x1_displacement = edge1.start.x - edge1.end.x
+        y1_displacement = edge1.start.y - edge1.end.y
+        z1_displacement = edge1.start.z - edge1.end.z
+
+        x2_displacement = edge2.start.x - edge2.end.x
+        y2_displacement = edge2.start.y - edge2.end.y
+        z2_displacement = edge2.start.z - edge2.end.z
+
+        if (
+            x1_displacement == x2_displacement
+            and y1_displacement == y2_displacement
+            and z1_displacement == z2_displacement
+        ):
+            beacon_mapping[edge1.start] = edge2.start
+            beacon_mapping[edge2.start] = edge1.start
+            beacon_mapping[edge1.end] = edge2.end
+            beacon_mapping[edge2.end] = edge1.end
+        else:
+            beacon_mapping[edge1.end] = edge2.start
+            beacon_mapping[edge2.start] = edge1.end
+            beacon_mapping[edge1.start] = edge2.end
+            beacon_mapping[edge2.end] = edge1.start
+
+    if (len(beacon_mapping) / 2) >= min_overlapping_beacons:
+        return beacon_mapping
+    else:
+        return {}
 
 
 def create_map(scanner_reports: list[ScannerReport], min_overlapping_beacons):
@@ -136,14 +139,10 @@ def create_map(scanner_reports: list[ScannerReport], min_overlapping_beacons):
         scanner_reports[0], scanner_reports[1], min_overlapping_beacons
     )
 
-    matching_beacons = [
-        (beacon, scanner_reports[1].beacons[beacon_map[i]])
-        for i, beacon in enumerate(scanner_reports[0].beacons)
-    ]
-
     differences = [
         (beacon1.x - beacon2.x, beacon1.y - beacon2.y, beacon1.z - beacon2.z)
-        for beacon1, beacon2 in matching_beacons
+        for beacon1, beacon2 in beacon_map.items()
+        if beacon1 in scanner_reports[0].beacons
     ]
 
     if len(set(differences)) != 1:
@@ -185,7 +184,6 @@ def _swap_columns(scanner_report: ScannerReport) -> list[ScannerReport]:
     reports = []
 
     for accessor in permutations(accessors, 3):
-        print([access[0] for access in accessor])
         reports.append(
             ScannerReport(
                 scanner_report.id,
