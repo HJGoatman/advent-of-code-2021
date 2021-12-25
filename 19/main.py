@@ -286,9 +286,7 @@ def create_map(scanner_reports: list[ScannerReport], min_overlapping_beacons):
     }
 
     # print(scanners)
-    print(scanners)
     paths = get_all_distances(scanners)
-    print(paths)
     # print()
     # print(paths)
     # print()
@@ -383,6 +381,18 @@ def get_rotations(scanner_report):
     return reports[0] + reports[1]
 
 
+def get_manhatten_distance(beacon1, beacon2):
+    return (
+        abs(beacon1[0] - beacon2[0])
+        + abs(beacon1[1] - beacon2[1])
+        + abs(beacon1[2] - beacon2[2])
+    )
+
+
+def get_maximum_manhatten_distance(scanners):
+    return max(map(lambda x: get_manhatten_distance(*x), combinations(scanners, 2)))
+
+
 if __name__ == "__main__":
     with open(sys.argv[1], "r") as input_file:
         input = input_file.read()
@@ -392,3 +402,5 @@ if __name__ == "__main__":
     scanners, beacons = create_map(scanner_reports, 12)
 
     print(len(beacons))
+
+    print(get_maximum_manhatten_distance(scanners))

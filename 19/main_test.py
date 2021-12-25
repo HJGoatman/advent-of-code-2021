@@ -7,6 +7,7 @@ from main import (
     Scanner,
     create_map,
     get_rotations,
+    get_maximum_manhatten_distance,
 )
 
 with open("tests/test1.txt") as input_file:
@@ -188,3 +189,14 @@ def test_get_list_of_beacons():
         Beacon(1994, -1805, 1792),
     }
     assert len(beacons) == 79
+
+
+def test_get_maximum_manhatten_distance():
+    with open("tests/test3.txt") as input_file:
+        input = input_file.read()
+
+    scanner_reports = read_scanner_reports(input)
+
+    scanners, beacons = create_map(scanner_reports, 12)
+
+    assert get_maximum_manhatten_distance(scanners) == 3621
