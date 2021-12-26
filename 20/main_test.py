@@ -4,6 +4,7 @@ from main import (
     Image,
     subpixels_to_decimal,
     get_surrounding_coordinates,
+    enhance_image,
 )
 import numpy as np
 
@@ -550,9 +551,7 @@ def test_load_image():
 def test_subpixels_to_decimal():
     assert (
         subpixels_to_decimal(
-            np.asarray(
-                [[False, False, False], [True, False, False], [False, True, False]]
-            )
+            [False, False, False, True, False, False, False, True, False]
         )
         == 34
     )
@@ -570,3 +569,39 @@ def test_get_surrounding_coordinates():
         (6, 10),
         (6, 11),
     ]
+
+
+def test_enhance_image():
+    with open("tests/test1.txt") as input_file:
+        input_str = input_file.read()
+
+    image_enhancement_algorithm, image = load_input(input_str)
+
+    assert enhance_image(image, image_enhancement_algorithm) == Image(
+        [
+            (-1, 0),
+            (-1, 1),
+            (-1, 3),
+            (-1, 4),
+            (0, -1),
+            (0, 2),
+            (0, 4),
+            (1, -1),
+            (1, 0),
+            (1, 2),
+            (1, 5),
+            (2, -1),
+            (2, 0),
+            (2, 1),
+            (2, 2),
+            (2, 5),
+            (3, 0),
+            (3, 3),
+            (3, 4),
+            (4, 1),
+            (4, 2),
+            (4, 5),
+            (5, 2),
+            (5, 4),
+        ]
+    )
