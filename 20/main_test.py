@@ -1,4 +1,10 @@
-from main import load_input, ImageEnhancementAlgorithm, Image
+from main import (
+    load_input,
+    ImageEnhancementAlgorithm,
+    Image,
+    subpixels_to_decimal,
+    get_surrounding_coordinates,
+)
 import numpy as np
 
 
@@ -526,19 +532,41 @@ def test_load_image():
     )
 
     assert image == Image(
-        pixels=np.asarray(
-            [
-                [True, False, False, True, False],
-                [
-                    True,
-                    False,
-                    False,
-                    False,
-                    False,
-                ],
-                [True, True, False, False, True],
-                [False, False, True, False, False],
-                [False, False, True, True, True],
-            ]
-        )
+        pixels={
+            (0, 0),
+            (0, 3),
+            (1, 0),
+            (2, 0),
+            (2, 1),
+            (2, 4),
+            (3, 2),
+            (4, 2),
+            (4, 3),
+            (4, 4),
+        }
     )
+
+
+def test_subpixels_to_decimal():
+    assert (
+        subpixels_to_decimal(
+            np.asarray(
+                [[False, False, False], [True, False, False], [False, True, False]]
+            )
+        )
+        == 34
+    )
+
+
+def test_get_surrounding_coordinates():
+    assert get_surrounding_coordinates((5, 10)) == [
+        (4, 9),
+        (4, 10),
+        (4, 11),
+        (5, 9),
+        (5, 10),
+        (5, 11),
+        (6, 9),
+        (6, 10),
+        (6, 11),
+    ]
