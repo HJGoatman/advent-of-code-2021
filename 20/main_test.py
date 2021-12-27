@@ -5,6 +5,7 @@ from main import (
     subpixels_to_decimal,
     get_surrounding_coordinates,
     enhance_image,
+    load_image,
 )
 import numpy as np
 
@@ -533,7 +534,7 @@ def test_load_image():
     )
 
     assert image == Image(
-        pixels={
+        pixels=[
             (0, 0),
             (0, 3),
             (1, 0),
@@ -544,7 +545,7 @@ def test_load_image():
             (4, 2),
             (4, 3),
             (4, 4),
-        }
+        ]
     )
 
 
@@ -577,31 +578,26 @@ def test_enhance_image():
 
     image_enhancement_algorithm, image = load_input(input_str)
 
-    assert enhance_image(image, image_enhancement_algorithm) == Image(
-        [
-            (-1, 0),
-            (-1, 1),
-            (-1, 3),
-            (-1, 4),
-            (0, -1),
-            (0, 2),
-            (0, 4),
-            (1, -1),
-            (1, 0),
-            (1, 2),
-            (1, 5),
-            (2, -1),
-            (2, 0),
-            (2, 1),
-            (2, 2),
-            (2, 5),
-            (3, 0),
-            (3, 3),
-            (3, 4),
-            (4, 1),
-            (4, 2),
-            (4, 5),
-            (5, 2),
-            (5, 4),
-        ]
+    with open("tests/test3.txt") as test_file:
+        test_str = test_file.read()
+
+    assert enhance_image(image, image_enhancement_algorithm) == load_image(
+        test_str, offset=(5, 5)
     )
+
+
+def test_two_enhancements():
+    with open("tests/test1.txt") as input_file:
+        input_str = input_file.read()
+
+    image_enhancement_algorithm, image = load_input(input_str)
+
+    image = enhance_image(image, image_enhancement_algorithm)
+
+    image = enhance_image(image, image_enhancement_algorithm)
+
+    with open("tests/test4.txt") as test_file:
+        test_str = test_file.read()
+
+    assert image == load_image(test_str, offset=(5, 5))
+    assert len(image.pixels) == 35
