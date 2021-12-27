@@ -125,15 +125,39 @@ def enhance_image(
     )
 
 
+def enhance_image_n(
+    image: Image,
+    algorithm: ImageEnhancementAlgorithm,
+    n: int,
+    fill_value: bool = False,
+    increase_bounds: int = 10,
+) -> Image:
+    for _ in range(n):
+        image = enhance_image(
+            image, algorithm, fill_value=fill_value, increase_bounds=increase_bounds
+        )
+
+        if algorithm.algorithm[0]:
+            fill_value = not fill_value
+    return image
+
+
 if __name__ == "__main__":
     with open(sys.argv[1]) as input_file:
         input_str = input_file.read()
 
+    # algorithm, image = load_input(input_str)
+
+    # image = enhance_image(image, algorithm, increase_bounds=10)
+    # print(image)
+    # image = enhance_image(image, algorithm, increase_bounds=10, fill_value=True)
+    # print(image)
+
+    # print(len(set(image.pixels)))
+
     algorithm, image = load_input(input_str)
+    image = enhance_image_n(image, algorithm, 50, increase_bounds=1)
 
-    image = enhance_image(image, algorithm, increase_bounds=0)
+    print()
     print(image)
-    image = enhance_image(image, algorithm, increase_bounds=0, fill_value=True)
-    print(image)
-
     print(len(set(image.pixels)))

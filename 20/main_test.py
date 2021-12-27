@@ -6,6 +6,7 @@ from main import (
     get_surrounding_coordinates,
     enhance_image,
     load_image,
+    enhance_image_n,
 )
 import numpy as np
 
@@ -601,3 +602,19 @@ def test_two_enhancements():
 
     assert image == load_image(test_str, offset=(5, 5))
     assert len(image.pixels) == 35
+
+
+def test_enhance_50():
+    with open("tests/test1.txt") as input_file:
+        input_str = input_file.read()
+
+    image_enhancement_algorithm, image = load_input(input_str)
+
+    assert (
+        len(
+            enhance_image_n(
+                image, image_enhancement_algorithm, 50, increase_bounds=1
+            ).pixels
+        )
+        == 3351
+    )
