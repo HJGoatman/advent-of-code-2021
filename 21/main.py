@@ -1,7 +1,11 @@
+from __future__ import annotations
 import sys
 import re
 from dataclasses import dataclass
-from itertools import cycle
+from itertools import cycle, repeat, product
+from functools import reduce
+from collections import Counter
+from typing import Tuple
 
 
 @dataclass
@@ -9,6 +13,27 @@ class Player:
     id: int
     position: int
     score: int
+
+
+@dataclass
+class GameTree:
+    pass
+
+
+@dataclass
+class Node(GameTree):
+    # players: list[Player]
+    # player_id: int
+    # position: int
+    # score: int
+    # move: int
+    subnodes: list[Node]
+
+
+@dataclass
+class Winner(GameTree):
+    id: int
+    repeats: int
 
 
 def load_input(input: str) -> list[Player]:
@@ -50,9 +75,67 @@ def play_game(player1, player2):
     return counter * min(player1.score, player2.score)
 
 
+def create_game_tree(
+    active_player: Player,
+    other_player: Player,
+    move: int,
+    winning_score: int,
+    repeats: int,
+    possible_moves,
+    is_first: bool,
+) -> Tuple[int, int]:
+    if not is_first:
+        position = ((active_player.position + move - 1) % 10) + 1
+        score = active_player.score + position
+    else:
+        position = active_player.position
+        score = active_player.score
+
+    if score >= winning_score:
+        if active_player.id == 1:
+            return (repeats, 0)
+        else:
+            return (0, repeats)
+
+    results = []
+    for move, repeat in possible_moves:
+        result = create_game_tree(
+            active_player=other_player,
+            other_player=Player(active_player.id, position, score),
+            move=move,
+            winning_score=winning_score,
+            repeats=repeats * repeat,
+            possible_moves=possible_moves,
+            is_first=False,
+        )
+
+        results.append(result)
+
+    return reduce(
+        lambda pair1, pair2: (pair1[0] + pair2[0], pair1[1] + pair2[1]), results
+    )
+
+
+# def sum_winners(tree: GameTree) -> Tuple[int, int]:
+#     if isinstance(tree, Winner):
+
+
+def play_dirac(player1, player2):
+    possible_moves = list(Counter(map(sum, product(*repeat([1, 2, 3], 3)))).items())
+
+    game_tree = create_game_tree(
+        player2, player1, 0, 21, 1, possible_moves=possible_moves, is_first=True
+    )
+
+    return max(game_tree)
+
+
 if __name__ == "__main__":
     with open(sys.argv[1]) as input_file:
         input_str = input_file.read()
 
     players = load_input(input_str)
     print(play_game(*players))
+
+    players = load_input(input_str)
+    print(play_dirac(*players))

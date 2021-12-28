@@ -1,4 +1,4 @@
-from main import Player, load_input, play_round, play_game
+from main import Player, load_input, play_round, play_game, play_dirac
 
 with open("tests/test1.txt") as test_file:
     test_str = test_file.read()
@@ -36,7 +36,15 @@ def test_play_round():
 
 def test_play_game():
     player1, player2 = load_input(test_str)
-    rounds = play_game(player1, player2)
-    print(rounds)
 
-    assert rounds * min(player1.score, player2.score) == 739785
+    result = play_game(player1, player2)
+
+    assert result == 739785
+
+
+def test_dirac_winners():
+    player1, player2 = load_input(test_str)
+
+    print(player1, player2)
+
+    assert play_dirac(player1, player2) == 444356092776315
