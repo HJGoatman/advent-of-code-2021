@@ -1,10 +1,12 @@
+from functools import reduce
 from main import (
     Range,
+    Cube,
     OnRebootStep,
     OffRebootStep,
     load_input,
-    create_cube,
     execute_step,
+    load_ranges,
 )
 import numpy as np
 
@@ -91,12 +93,12 @@ not_inside = [
 def is_inside(cube, inside, value=1):
     for x, y, z in inside:
         print(x, y, z)
-        assert cube[x, y, z] == value
+        assert cube.has((x, y, z), value)
 
 
-def test_step_1():
+def test_steps_1():
 
-    cube = create_cube(100, 100, 100)
+    cube = Cube(Range(0, 100), Range(0, 100), Range(0, 100))
 
     cube = execute_step(cube, input_1[0])
 
@@ -114,4 +116,14 @@ def test_step_1():
 
     is_inside(cube, [(10, 10, 10)])
 
-    assert np.sum(cube == 1) == 39
+    assert cube.count_on() == 39
+
+
+def test_steps_2():
+    with open("tests/test2.txt") as test_file:
+        test_str = test_file.read()
+
+    steps = load_input(test_str)
+    cube = Cube(*load_ranges("x=-50..50,y=-50..50,z=-50..50"))
+    cube = reduce(execute_step, steps, cube)
+    assert cube.count_on() == 590784

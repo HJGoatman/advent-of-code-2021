@@ -26,14 +26,45 @@ class OffRebootStep(RebootStep):
     pass
 
 
+class Cube:
+    def __init__(self, x: Range, y: Range, z: Range) -> None:
+        self.x_range = x
+        self.y_range = y
+        self.z_range = z
+        self.x_offset, self.y_offset, self.z_offset = 0 - x.min, 0 - y.min, 0 - z.min
+        self.array = np.zeros(
+            (x.max - x.min + 1, y.max - y.min + 1, z.max - z.min + 1)
+        ).astype(int)
+
+    def set(self, x: Range, y: Range, z: Range, value) -> None:
+        self.array[
+            x.min + self.x_offset : x.max + self.x_offset + 1,
+            y.min + self.y_offset : y.max + self.y_offset + 1,
+            z.min + self.z_offset : z.max + self.z_offset + 1,
+        ] = value
+
+    def has(self, coordinate, value) -> bool:
+        x, y, z = coordinate
+        return (
+            self.array[x + self.x_offset, y + self.y_offset, z + self.z_offset] == value
+        )
+
+    def count_on(self) -> int:
+        return np.sum(self.array == 1)
+
+
 def load_range(range: str) -> Range:
-    min_str, max_str = re.search(r"[x|y|z]=(\d+)..(\d+)", range).groups()
+    min_str, max_str = re.search(r"[x|y|z]=(-?\d+)..(-?\d+)", range).groups()
     return Range(int(min_str), int(max_str))
+
+
+def load_ranges(ranges: str) -> list[Range]:
+    return map(load_range, ranges.split(","))
 
 
 def load_step(step: str) -> RebootStep:
     step_type, ranges_str = step.split(" ")
-    ranges = map(load_range, ranges_str.split(","))
+    ranges = load_ranges(ranges_str)
     if step_type == "on":
         return OnRebootStep(*ranges)
     else:
@@ -44,27 +75,26 @@ def load_input(input: str) -> list[RebootStep]:
     return [load_step(line) for line in input.split("\n") if line != ""]
 
 
-def create_cube(x_size, y_size, z_size):
-    array = np.zeros(
-        (
-            x_size + 1,
-            y_size + 1,
-            z_size + 1,
-        )
-    ).astype(int)
-
-    return array
-
-
-def execute_step(cube: np.ndarray, step: RebootStep) -> np.ndarray:
+def execute_step(cube: Cube, step: RebootStep) -> Cube:
     x, y, z = step.x, step.y, step.z
+
+    if (
+        (x.min < cube.x_range.min)
+        or (x.max > cube.x_range.max)
+        or (y.min < cube.y_range.min)
+        or (y.max > cube.y_range.max)
+        or (z.min < cube.z_range.min)
+        or (z.max > cube.z_range.max)
+    ):
+        return cube
+
     if isinstance(step, OnRebootStep):
         value = 1
     else:
         value = 0
 
-    cube = cube.copy()
+    # cube = cube.copy()
 
-    cube[x.min : x.max + 1, y.min : y.max + 1, z.min : z.max + 1] = value
+    cube.set(x, y, z, value)
 
     return cube
