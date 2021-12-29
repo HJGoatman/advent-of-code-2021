@@ -1,7 +1,7 @@
 from functools import reduce
 from main import (
     Range,
-    Cube,
+    ReactorCore,
     OnRebootStep,
     OffRebootStep,
     load_input,
@@ -90,33 +90,33 @@ not_inside = [
 ]
 
 
-def is_inside(cube, inside, value=1):
+def is_inside(core, inside, value=1):
     for x, y, z in inside:
         print(x, y, z)
-        assert cube.has((x, y, z), value)
+        assert core.has((x, y, z), value)
 
 
 def test_steps_1():
 
-    cube = Cube(Range(0, 100), Range(0, 100), Range(0, 100))
+    core = ReactorCore(Range(0, 100), Range(0, 100), Range(0, 100))
 
-    cube = execute_step(cube, input_1[0])
+    core = execute_step(core, input_1[0])
 
-    is_inside(cube, inside_1)
+    is_inside(core, inside_1)
 
-    cube = execute_step(cube, input_1[1])
+    core = execute_step(core, input_1[1])
 
-    is_inside(cube, inside_2)
+    is_inside(core, inside_2)
 
-    cube = execute_step(cube, input_1[2])
+    core = execute_step(core, input_1[2])
 
-    is_inside(cube, not_inside, value=0)
+    is_inside(core, not_inside, value=0)
 
-    cube = execute_step(cube, input_1[3])
+    core = execute_step(core, input_1[3])
 
-    is_inside(cube, [(10, 10, 10)])
+    is_inside(core, [(10, 10, 10)])
 
-    assert cube.count_on() == 39
+    assert core.count_on() == 39
 
 
 def test_steps_2():
@@ -124,6 +124,8 @@ def test_steps_2():
         test_str = test_file.read()
 
     steps = load_input(test_str)
-    cube = Cube(*load_ranges("x=-50..50,y=-50..50,z=-50..50"))
-    cube = reduce(execute_step, steps, cube)
-    assert cube.count_on() == 590784
+    core = ReactorCore(*load_ranges("x=-50..50,y=-50..50,z=-50..50"))
+    core = reduce(execute_step, steps, core)
+    assert core.count_on() == 590784
+
+

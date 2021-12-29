@@ -28,15 +28,15 @@ class OffRebootStep(RebootStep):
     pass
 
 
-class Cube:
+class ReactorCore:
     def __init__(self, x: Range, y: Range, z: Range) -> None:
         self.x_range = x
         self.y_range = y
         self.z_range = z
         self.x_offset, self.y_offset, self.z_offset = 0 - x.min, 0 - y.min, 0 - z.min
         self.array = np.zeros(
-            (x.max - x.min + 1, y.max - y.min + 1, z.max - z.min + 1)
-        ).astype(int)
+            (x.max - x.min + 1, y.max - y.min + 1, z.max - z.min + 1), np.bool_
+        )
 
     def set(self, x: Range, y: Range, z: Range, value) -> None:
         self.array[
@@ -77,29 +77,27 @@ def load_input(input: str) -> list[RebootStep]:
     return [load_step(line) for line in input.split("\n") if line != ""]
 
 
-def execute_step(cube: Cube, step: RebootStep) -> Cube:
+def execute_step(core: ReactorCore, step: RebootStep) -> ReactorCore:
     x, y, z = step.x, step.y, step.z
 
     if (
-        (x.min < cube.x_range.min)
-        or (x.max > cube.x_range.max)
-        or (y.min < cube.y_range.min)
-        or (y.max > cube.y_range.max)
-        or (z.min < cube.z_range.min)
-        or (z.max > cube.z_range.max)
+        (x.min < core.x_range.min)
+        or (x.max > core.x_range.max)
+        or (y.min < core.y_range.min)
+        or (y.max > core.y_range.max)
+        or (z.min < core.z_range.min)
+        or (z.max > core.z_range.max)
     ):
-        return cube
+        return core
 
     if isinstance(step, OnRebootStep):
         value = 1
     else:
         value = 0
 
-    # cube = cube.copy()
+    core.set(x, y, z, value)
 
-    cube.set(x, y, z, value)
-
-    return cube
+    return core
 
 
 if __name__ == "__main__":
@@ -107,6 +105,6 @@ if __name__ == "__main__":
         input_str = input_file.read()
 
     steps = load_input(input_str)
-    cube = Cube(*load_ranges("x=-50..50,y=-50..50,z=-50..50"))
+    cube = ReactorCore(*load_ranges("x=-50..50,y=-50..50,z=-50..50"))
     cube = reduce(execute_step, steps, cube)
     print(cube.count_on())
