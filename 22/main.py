@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import re
 import numpy as np
+from functools import reduce
+import sys
 
 
 @dataclass
@@ -98,3 +100,13 @@ def execute_step(cube: Cube, step: RebootStep) -> Cube:
     cube.set(x, y, z, value)
 
     return cube
+
+
+if __name__ == "__main__":
+    with open(sys.argv[1]) as input_file:
+        input_str = input_file.read()
+
+    steps = load_input(input_str)
+    cube = Cube(*load_ranges("x=-50..50,y=-50..50,z=-50..50"))
+    cube = reduce(execute_step, steps, cube)
+    print(cube.count_on())
