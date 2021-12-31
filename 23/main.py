@@ -4,7 +4,6 @@ import re
 
 @dataclass
 class Amphipod:
-    id: int
     energy: int
 
 
@@ -53,7 +52,22 @@ class State:
 
 
 def load_hallway(hallway: str) -> Hallway:
-    return Hallway([None for _ in range(len(re.search(r"#(\.+)#", hallway).group(1)))])
+    return Hallway(
+        [load_space(char) for char in re.search(r"#(\.+)#", hallway).group(1)]
+    )
+
+
+def load_space(char: str) -> Amphipod | None:
+    if char == "A":
+        return Amber()
+    elif char == "B":
+        return Bronze()
+    elif char == "C":
+        return Copper()
+    elif char == "D":
+        return Desert()
+    else:
+        return None
 
 
 def load_rooms(rooms: str) -> Room:
@@ -66,28 +80,9 @@ def load_rooms(rooms: str) -> Room:
         if char != "#"
     ]
 
-    rooms_out = list()
-
     room_types = iter([Amber, Bronze, Copper, Desert])
 
-    id_counter = 1
-    for i, room in rooms:
-        occupants = []
-        for amphipod_str in room:
-            if amphipod_str == "A":
-                occupants.append(Amber(id_counter))
-            elif amphipod_str == "B":
-                occupants.append(Bronze(id_counter))
-            elif amphipod_str == "C":
-                occupants.append(Copper(id_counter))
-            else:
-                occupants.append(Desert(id_counter))
-
-            id_counter = id_counter + 1
-
-        rooms_out.append(Room(next(room_types), i, occupants))
-
-    return rooms_out
+    return [Room(next(room_types), i, list(map(load_space, room))) for i, room in rooms]
 
 
 def load_input(input: str) -> State:
